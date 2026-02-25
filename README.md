@@ -1,5 +1,6 @@
 # localizador_cam_aruco
 
+
 Paquete ROS 2 para estimar la pose global de una cámara mediante marcadores fiduciarios ArUco.
 
 El nodo se suscribe a las detecciones publicadas por `aruco_opencv`, y para cada marcador visible calcula la pose de la cámara en el frame `map` invirtiendo la transformación relativa cámara-marcador y combinándola con la pose mundial del marcador definida en un archivo YAML. Cuando hay varios marcadores visibles simultáneamente, las estimaciones se fusionan mediante una media ponderada por varianza inversa, asignando mayor peso a los marcadores más cercanos.
