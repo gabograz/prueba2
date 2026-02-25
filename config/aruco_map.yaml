@@ -1,0 +1,11 @@
+/localizador_node:
+  ros__parameters:
+    # [X, Y, Z, Roll, Pitch, Yaw] — posición en metros, ángulos en GRADOS
+    # El origen (0,0,0) es el frame "map"
+    # Roll/Pitch/Yaw describen hacia dónde "mira" la cara del marcador
+
+    marker_0: [0.0, 0.7, 1.425, 0.0, 90.0, 0.0]
+
+    marker_1: [1.0, 0.0, 1.425, 0.0, 90.0, 90.0]
+
+    marker_2: [2.46, 1.5, 1.425, 0.0, -90.0, 0.0]
