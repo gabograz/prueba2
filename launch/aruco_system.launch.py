@@ -10,6 +10,7 @@ def generate_launch_description():
 
     aruco_map_path    = os.path.join(pkg_share_dir, 'config', 'aruco_map.yaml')
     aruco_params_path = os.path.join(pkg_share_dir, 'config', 'aruco_params.yaml')
+    robot_config_path = os.path.join(pkg_share_dir, 'config', 'robot_config.yaml')
 
     aruco_tracker_node = Node(
         package='aruco_opencv',
@@ -23,7 +24,7 @@ def generate_launch_description():
         package=pkg_name,
         executable='localizador_node',
         name='localizador_node',
-        parameters=[aruco_map_path],
+        parameters=[aruco_map_path, robot_config_path],
         output='screen'
     )
 

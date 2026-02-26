@@ -1,9 +1,8 @@
 # localizador_cam_aruco
 
+Paquete ROS 2 para estimar la pose global de un robot mediante marcadores fiduciarios ArUco.
 
-Paquete ROS 2 para estimar la pose global de una cámara mediante marcadores fiduciarios ArUco.
-
-El nodo se suscribe a las detecciones publicadas por `aruco_opencv`, y para cada marcador visible calcula la pose de la cámara en el frame `map` invirtiendo la transformación relativa cámara-marcador y combinándola con la pose mundial del marcador definida en un archivo YAML. Cuando hay varios marcadores visibles simultáneamente, las estimaciones se fusionan mediante una media ponderada por varianza inversa, asignando mayor peso a los marcadores más cercanos.
+El nodo se suscribe a las detecciones publicadas por `aruco_opencv`, y para cada marcador visible calcula la pose de la cámara en el frame `map` invirtiendo la transformación relativa cámara-marcador y combinándola con la pose mundial del marcador definida en un archivo YAML. Opcionalmente, si se proporciona la posición de la cámara respecto al robot, se obtiene directamente la pose de `base_link` en el mapa. Cuando hay varios marcadores visibles simultáneamente, las estimaciones se fusionan mediante una media ponderada por varianza inversa, asignando mayor peso a los marcadores más cercanos.
 
 ## Dependencias
 
@@ -56,16 +55,27 @@ Referencia rápida de orientaciones habituales:
     output_frame: ''
 ```
 
+### Configuración del robot (`config/robot_config.yaml`)
+
+Define la posición de la cámara respecto al centro del robot (`base_link`). Si no se define, el nodo asume que la cámara está en el centro del robot.
+
+```yaml
+/localizador_node:
+  ros__parameters:
+    # [X, Y, Z, Roll, Pitch, Yaw] — metros y grados
+    camera_to_base: [0.1, 0.0, 0.3, 0.0, 0.0, 0.0]
+```
+
 ## Uso
 
 ```bash
 ros2 launch localizador_cam_aruco aruco_system.launch.py
 ```
 
-La pose estimada de la cámara se publica en:
+La pose estimada del robot se publica en:
 
 ```
-/aruco_pose_global  [geometry_msgs/PoseWithCovarianceStamped]
+/robot_pose_global  [geometry_msgs/PoseWithCovarianceStamped]
 ```
 
 ## Estructura del paquete
@@ -74,7 +84,8 @@ La pose estimada de la cámara se publica en:
 localizador_cam_aruco/
 ├── config/
 │   ├── aruco_map.yaml        # poses mundiales de los marcadores
-│   └── aruco_params.yaml     # configuración de aruco_opencv
+│   ├── aruco_params.yaml     # configuración de aruco_opencv
+│   └── robot_config.yaml     # posición de la cámara en el robot
 ├── launch/
 │   └── aruco_system.launch.py
 ├── localizador_cam_aruco/
@@ -84,3 +95,24 @@ localizador_cam_aruco/
 ├── setup.py
 └── setup.cfg
 ```
+
+## Topics y nodos
+
+### aruco_tracker (aruco_opencv)
+
+Suscrito a:
+- `/camera/image_raw` — `sensor_msgs/msg/Image`
+- `/camera/camera_info` — `sensor_msgs/msg/CameraInfo`
+
+Publica en:
+- `/aruco_detections` — `aruco_opencv_msgs/msg/ArucoDetection`
+- `/aruco_tracker/debug` — `sensor_msgs/msg/Image`
+- `/tf` — `tf2_msgs/msg/TFMessage`
+
+### localizador_node
+
+Suscrito a:
+- `/aruco_detections` — `aruco_opencv_msgs/msg/ArucoDetection`
+
+Publica en:
+- `/robot_pose_global` — `geometry_msgs/msg/PoseWithCovarianceStamped`

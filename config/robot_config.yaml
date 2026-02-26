@@ -1,0 +1,13 @@
+/localizador_node:
+  ros__parameters:
+    # Pose de la cámara respecto a base_link [X, Y, Z, Roll, Pitch, Yaw]
+    # Posición en metros, ángulos en grados, convención Roll-Pitch-Yaw (XYZ)
+    #
+    # Ejemplos habituales:
+    #   Cámara en el centro del robot:         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    #   Cámara 10cm al frente, 30cm de altura: [0.1, 0.0, 0.3, 0.0, 0.0, 0.0]
+    #   Cámara girada 90° mirando al techo:    [0.0, 0.0, 0.3, 0.0, -90.0, 0.0]
+    #
+    # Si no se define este parámetro, el nodo asume que la cámara
+    # está en el centro del robot (equivalente a todos ceros).
+    camera_to_base: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
