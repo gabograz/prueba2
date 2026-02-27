@@ -110,6 +110,12 @@ class ArucoLocalizer(Node):
             rot_marker_to_cam = rot_cam_to_marker.inv()
             t_marker_to_cam   = rot_marker_to_cam.apply(-t_cam_to_marker)
 
+            # Rotación fija entre el frame de OpenCV y el frame ROS estándar
+            # OpenCV: X=derecha, Y=abajo, Z=adelante
+            # ROS:    X=adelante, Y=izquierda, Z=arriba
+            rot_cv_to_ros = R.from_euler('xyz', np.radians([0, 0, 90]))
+            rot_marker_to_cam = rot_cv_to_ros * rot_marker_to_cam
+
             # Pose de la cámara en el mapa
             t_in_map      = rot_marker_world.apply(t_marker_to_cam)
             cam_pos       = marker_pos_world + t_in_map
