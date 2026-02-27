@@ -2,7 +2,16 @@
   ros__parameters:
     cam_base_topic: camera/image_raw
     marker_dict: 4X4_50
-    marker_size: 0.14
+    marker_size: 0.096 # en metros
     image_is_rectified: false
+    image_sub_compressed: false
     publish_tf: true
     output_frame: ''
+    image_sub_qos:
+      reliability: 2
+      durability: 2
+      depth: 1
+    pose_selector:
+      strategy: REPROJECTION_ERROR
+    aruco:
+      cornerRefinementMethod: 2
