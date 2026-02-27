@@ -4,7 +4,7 @@
     # El origen (0,0,0) es el frame "map"
     # Roll/Pitch/Yaw describen hacia dónde "mira" la cara del marcador
 
-    marker_0: [0.0, 0.7, 1.425, 0.0, 90.0, 0.0]
+    marker_0: [0.0, 0.7, 1.425, -90.0, 90.0, 0.0]
 
     marker_1: [1.0, 0.0, 1.425, 0.0, 90.0, 90.0]
 
