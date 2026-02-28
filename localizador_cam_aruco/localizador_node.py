@@ -125,7 +125,7 @@ class ArucoLocalizer(Node):
 
             # Aplicar transform cámara → base_link para obtener pose del robot
             rot_base_world = rot_cam_world * self.rot_cam_to_base.inv()
-            base_pos       = cam_pos + rot_cam_world.apply(self.t_cam_to_base)
+            base_pos       = cam_pos - rot_base_world.apply(self.t_cam_to_base)
             base_quat      = rot_base_world.as_quat()  # [x, y, z, w]
 
             # Peso inversamente proporcional a la varianza estimada (distancia²)
