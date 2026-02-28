@@ -40,6 +40,13 @@ class ArucoLocalizer(Node):
         )
         self.get_logger().info("Localizador iniciado, cargando mapa de marcadores...")
 
+        # Rotación OpenCV → ROS
+        self.R_opencv_to_ros = R.from_matrix([
+            [ 0, -1,  0],
+            [ 0,  0, -1],
+            [ 1,  0,  0]
+        ])
+
         # Leer transform cámara → base_link desde robot_config.yaml.
         # Si no está definido se usa la identidad (cámara en el centro del robot).
         if self.has_parameter('camera_to_base'):
@@ -110,9 +117,6 @@ class ArucoLocalizer(Node):
             rot_marker_to_cam = rot_cam_to_marker.inv()
             t_marker_to_cam   = rot_marker_to_cam.apply(-t_cam_to_marker)
 
-            # Rotación fija entre el frame de OpenCV y el frame ROS estándar
-            # OpenCV: X=derecha, Y=abajo, Z=adelante
-            # ROS:    X=adelante, Y=izquierda, Z=arriba
 
             # Pose de la cámara en el mapa
             t_in_map      = rot_marker_world.apply(t_marker_to_cam)
