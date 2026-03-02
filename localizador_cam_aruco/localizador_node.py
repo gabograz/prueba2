@@ -8,30 +8,6 @@ from scipy.spatial.transform import Rotation as R
 
 
 class ArucoLocalizer(Node):
-    """
-    Nodo de localización global basado en marcadores ArUco.
-
-    Estima la pose del robot en el frame 'map' a partir de las detecciones
-    publicadas por aruco_opencv. Para cada marcador visible, invierte la pose
-    relativa cámara-marcador y la combina con la pose mundial del marcador
-    (definida en aruco_map.yaml) para obtener la pose de la cámara en el mapa.
-    Opcionalmente, si se define camera_to_base en robot_config.yaml, se aplica
-    el transform cámara→base_link para obtener la pose del robot.
-
-    Cuando hay varios marcadores visibles simultáneamente, las estimaciones se
-    fusionan mediante una media ponderada por varianza inversa, asignando mayor
-    peso a los marcadores más cercanos.
-
-    Parámetros (aruco_map.yaml):
-        marker_<id>: [X, Y, Z, Roll, Pitch, Yaw]
-            Pose mundial de cada marcador en metros y grados.
-
-    Parámetros (robot_config.yaml):
-        camera_to_base: [X, Y, Z, Roll, Pitch, Yaw]
-            Pose de la cámara respecto a base_link en metros y grados.
-            Si no se define, se asume que la cámara está en el centro del robot.
-    """
-
     def __init__(self):
         super().__init__(
             'localizador_node',
@@ -40,8 +16,6 @@ class ArucoLocalizer(Node):
         )
         self.get_logger().info("Localizador iniciado, cargando mapa de marcadores...")
 
-        # Leer transform cámara → base_link desde robot_config.yaml.
-        # Si no está definido se usa la identidad (cámara en el centro del robot).
         if self.has_parameter('camera_to_base'):
             ctb = self.get_parameter('camera_to_base').value
             self.t_cam_to_base   = np.array(ctb[:3])
@@ -93,15 +67,11 @@ class ArucoLocalizer(Node):
                 )
                 continue
 
-            # Pose mundial del marcador
+            #Pose mundial del marcador
             marker_pos_world = np.array(coords[:3])
             rot_marker_world = R.from_euler('xyz', np.radians(coords[3:]))
 
-            # aruco_opencv nos da la pose del marcador relativa a la cámara.
-            # Necesitamos lo contrario: la pose de la cámara relativa al marcador.
-            # Para invertir una pose rígida:
-            #   t_inv = -R^T * t
-            #   R_inv = R^T
+            #Pose de la cámara relativa al marcador.
             p = marker.pose.position
             q = marker.pose.orientation
             t_cam_to_marker   = np.array([p.x, p.y, p.z])
@@ -111,23 +81,17 @@ class ArucoLocalizer(Node):
             t_marker_to_cam   = rot_marker_to_cam.apply(-t_cam_to_marker)
 
 
-            # Pose de la cámara en el mapa
+            #Pose de la cámara en el mapa
             t_in_map      = rot_marker_world.apply(t_marker_to_cam)
             cam_pos       = marker_pos_world + t_in_map
             rot_cam_world = rot_marker_world * rot_marker_to_cam
 
-            # Aplicar transform cámara → base_link para obtener pose del robot
+            #Aplicar transform cámara → base_link para obtener pose del robot
             rot_base_world = rot_cam_world * self.rot_cam_to_base.inv()
             base_pos       = cam_pos - rot_cam_world.apply(self.t_cam_to_base)
             base_quat      = rot_base_world.as_quat()  # [x, y, z, w]
 
-            #test
-            rpy_cam = rot_cam_world.as_euler('xyz', degrees=True)
-            self.get_logger().info(f"rot_cam_world RPY: {rpy_cam[0]:.1f} {rpy_cam[1]:.1f} {rpy_cam[2]:.1f}")
-            rpy_base = rot_base_world.as_euler('xyz', degrees=True)  
-            self.get_logger().info(f"rot_base_world RPY: {rpy_base[0]:.1f} {rpy_base[1]:.1f} {rpy_base[2]:.1f}")
-
-            # Peso inversamente proporcional a la varianza estimada (distancia²)
+            #Peso inversamente proporcional a la varianza estimada (distancia²)
             distancia = max(np.linalg.norm(t_cam_to_marker), 0.05)
             peso      = 1.0 / (0.01 * distancia ** 2)
 
@@ -144,20 +108,18 @@ class ArucoLocalizer(Node):
         if sum_weights <= 0.0:
             return
 
-        # Media ponderada de posición
+        #Media ponderada de posición
         pos_final = sum_pos / sum_weights
 
-        # Media ponderada de orientación (método de Markley):
-        # el autovector del mayor autovalor de la matriz acumulada es
-        # el cuaternión que minimiza la suma ponderada de distancias angulares
+        #Media ponderada de orientación (método de Markley):
         _, eigenvectors = np.linalg.eigh(sum_q_matrix)
         q_final = eigenvectors[:, -1]
         if q_final[3] < 0:
-            q_final = -q_final  # forma canónica: w >= 0
+            q_final = -q_final 
 
         incertidumbre = 1.0 / sum_weights
 
-        # Construcción del mensaje
+        #Construcción del mensaje
         pose_msg = PoseWithCovarianceStamped()
         pose_msg.header.stamp    = msg.header.stamp
         pose_msg.header.frame_id = 'map'
@@ -170,7 +132,7 @@ class ArucoLocalizer(Node):
         pose_msg.pose.pose.orientation.z = float(q_final[2])
         pose_msg.pose.pose.orientation.w = float(q_final[3])
 
-        # Covarianza diagonal 6x6 [x, y, z, roll, pitch, yaw]
+        #Covarianza diagonal 6x6 [x, y, z, roll, pitch, yaw]
         for i in [0, 7, 14, 21, 28, 35]:
             pose_msg.pose.covariance[i] = incertidumbre
 

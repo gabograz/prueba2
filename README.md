@@ -35,12 +35,12 @@ Referencia rápida de orientaciones habituales:
 
 | La cara del marcador apunta hacia | Roll | Pitch | Yaw  |
 |-----------------------------------|------|-------|------|
-| +X                                | 0°   | 90°   | 0°   |
-| -X                                | 0°   | -90°  | 0°   |
-| +Y                                | 0°   | 90°   | 90°  |
-| -Y                                | 0°   | 90°   | -90° |
-| +Z (techo)                        | 0°   | 180°  | 0°   |
-| -Z (suelo)                        | 0°   | 0°    | 0°   |
+| +X                                | 90°  | 0°    | 90°  |
+| -X                                | 90°  | 0°    | -90° |
+| +Y                                | 90°  | 0°    | 180° |
+| -Y                                | 90°  | 0°    | 0°   |
+| +Z (techo)                        | 0°   | 0°    | 0°   |
+| -Z (suelo)                        | 180° | 0°    | 0°   |
 
 ### Parámetros del tracker (`config/aruco_params.yaml`)
 
@@ -48,8 +48,8 @@ Referencia rápida de orientaciones habituales:
 /aruco_tracker:
   ros__parameters:
     cam_base_topic: camera/image_raw
-    marker_dict: 4X4_50
-    marker_size: 0.096        # tamaño del marcador en metros
+    marker_dict: 4X4_50       #Diccionario
+    marker_size: 0.096        #Tamaño del marcador en metros
     image_is_rectified: false
     publish_tf: true
     output_frame: ''
@@ -57,14 +57,60 @@ Referencia rápida de orientaciones habituales:
 
 ### Configuración del robot (`config/robot_config.yaml`)
 
-Define la posición de la cámara respecto al centro del robot (`base_link`). Si no se define, el nodo asume que la cámara está en el centro del robot.
+Define la posición y orientación de la cámara respecto al centro del robot. Si no se define, el nodo asume que la cámara está en el centro del robot.
+
+> **Importante:** los ejes X, Y, Z de este parámetro están expresados en el **frame de la cámara**, no en el de `base_link`:
+>
+> | Eje | Dirección física |
+> |-----|-----------------|
+> | X   | Izquierda de la cámara |
+> | Y   | arriba de la cámara |
+> | Z   | adelante de la cámara |
 
 ```yaml
 /localizador_node:
   ros__parameters:
     # [X, Y, Z, Roll, Pitch, Yaw] — metros y grados
-    camera_to_base: [0.1, 0.0, 0.3, 0.0, 0.0, 0.0]
+    # Ejemplo: cámara 30cm por delante del centro del robot, sin rotación
+    camera_to_base: [0.0, 0.0, 0.3, 0.0, 0.0, 0.0]
 ```
+
+## Puesta en marcha paso a paso
+
+### 1. Medir y colocar los marcadores
+
+Coloca los marcadores ArUco en posiciones fijas del entorno. Mide con cinta métrica la posición de cada uno respecto al origen del mapa `[0, 0, 0]`.
+
+### 2. Configurar `aruco_map.yaml`
+
+Para cada marcador, añade una entrada con su posición `[X, Y, Z]` en metros y su orientación `[Roll, Pitch, Yaw]` en grados. Usa la tabla de orientaciones de la sección anterior para saber qué ángulos corresponden a la dirección a la que mira la cara del marcador.
+
+```yaml
+/localizador_node:
+  ros__parameters:
+    marker_0: [1.0, 0.0, 1.2, 90.0, 0.0, 90.0]   # mira hacia +X
+    marker_1: [0.0, 2.0, 1.2, 90.0, 0.0, 180.0]  # mira hacia +Y
+```
+
+### 3. Verificar cada marcador
+
+Arranca el nodo y coloca el robot en una posición conocida frente a cada marcador. Comprueba que la pose publicada en `/robot_pose_global` coincide con la posición real del robot:
+
+```bash
+ros2 topic echo /robot_pose_global
+```
+
+Si la posición no es correcta, revisa la orientación del marcador en el YAML.
+
+### 4. Configurar `robot_config.yaml`
+
+Mide la distancia de la cámara al centro del robot **en ejes de la cámara**  y ponla en `camera_to_base`:
+
+```yaml
+camera_to_base: [0.0, 0.0, 0.3, 0.0, 0.0, 0.0]  # 30cm por delante
+```
+
+Para verificarlo, coloca el robot en una posición conocida y comprueba que el offset se aplica correctamente en la pose publicada.
 
 ## Uso
 
