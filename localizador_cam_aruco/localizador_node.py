@@ -116,6 +116,12 @@ class ArucoLocalizer(Node):
             cam_pos       = marker_pos_world + t_in_map
             rot_cam_world = rot_marker_world * rot_marker_to_cam
 
+            #test
+            rpy_cam = rot_cam_world.as_euler('xyz', degrees=True)
+            self.get_logger().info(f"rot_cam_world RPY: {rpy_cam[0]:.1f} {rpy_cam[1]:.1f} {rpy_cam[2]:.1f}")
+            rpy_base = rot_base_world.as_euler('xyz', degrees=True)  
+            self.get_logger().info(f"rot_base_world RPY: {rpy_base[0]:.1f} {rpy_base[1]:.1f} {rpy_base[2]:.1f}")
+
             # Aplicar transform cámara → base_link para obtener pose del robot
             rot_base_world = rot_cam_world * self.rot_cam_to_base.inv()
             base_pos       = cam_pos - rot_cam_world.apply(self.t_cam_to_base)
