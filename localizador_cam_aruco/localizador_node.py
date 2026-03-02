@@ -45,7 +45,7 @@ class ArucoLocalizer(Node):
         if self.has_parameter('camera_to_base'):
             ctb = self.get_parameter('camera_to_base').value
             self.t_cam_to_base   = np.array(ctb[:3])
-            self.rot_cam_to_base = R.from_euler('xyz', np.radians(ctb[3:]))
+            self.rot_cam_to_base = R.from_euler('XYZ', np.radians(ctb[3:]))
             self.get_logger().info(
                 f"Transform cámara→base_link cargado: "
                 f"T={self.t_cam_to_base}, RPY={ctb[3:]}°"
@@ -95,7 +95,7 @@ class ArucoLocalizer(Node):
 
             # Pose mundial del marcador
             marker_pos_world = np.array(coords[:3])
-            rot_marker_world = R.from_euler('xyz', np.radians(coords[3:]))
+            rot_marker_world = R.from_euler('XYZ', np.radians(coords[3:]))
 
             # aruco_opencv nos da la pose del marcador relativa a la cámara.
             # Necesitamos lo contrario: la pose de la cámara relativa al marcador.
@@ -170,7 +170,7 @@ class ArucoLocalizer(Node):
 
         self.publisher.publish(pose_msg)
 
-        rpy = R.from_quat(q_final).as_euler('xyz', degrees=True)
+        rpy = R.from_quat(q_final).as_euler('XYZ', degrees=True)
         self.get_logger().info(
             f"X={pos_final[0]:.3f}  Y={pos_final[1]:.3f}  Z={pos_final[2]:.3f} | "
             f"R={rpy[0]:.1f}°  P={rpy[1]:.1f}°  Y={rpy[2]:.1f}°  "
